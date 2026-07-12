@@ -12,10 +12,21 @@ export const metadata: Metadata = {
   },
 };
 
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gray-50/50">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      {children}
+    </Suspense>
+  );
 }
