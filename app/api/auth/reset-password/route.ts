@@ -19,27 +19,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
     }
 
-    // Find the token
-    const record = await prisma.verificationToken.findUnique({
-      where: { token },
+    // Find the user by reset token
+    const user = await prisma.user.findUnique({
+      where: { resetToken: token },
     });
 
-    if (!record || record.expires < new Date()) {
+    if (!user || !user.resetTokenExpiresAt || user.resetTokenExpiresAt < new Date()) {
       return NextResponse.json(
         { error: "This reset link has expired or is invalid. Please request a new one." },
         { status: 400 }
       );
     }
 
-    // Update password
+    // Update password and clear reset token
     const hashedPassword = await bcrypt.hash(password, 12);
     await prisma.user.update({
-      where: { email: record.identifier },
-      data:  { hashedPassword },
+      where: { id: user.id },
+      data:  { 
+        hashedPassword,
+        resetToken: null,
+        resetTokenExpiresAt: null
+      },
     });
-
-    // Delete the used token
-    await prisma.verificationToken.delete({ where: { token } });
 
     return NextResponse.json({ success: true });
   } catch (err) {

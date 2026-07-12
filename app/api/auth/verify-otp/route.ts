@@ -5,35 +5,40 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
-import { verifyOtp } from "@/lib/otp";
-import { OtpPurpose } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, code, purpose } = await req.json();
+    const { email, code } = await req.json();
 
-    if (!email || !code || !purpose) {
+    if (!email || !code) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
+    if (!user || !user.otpCode || !user.otpExpiresAt) {
       return NextResponse.json({ error: "Invalid or expired code." }, { status: 400 });
     }
 
-    const valid = await verifyOtp(user.id, code, purpose as OtpPurpose);
+    if (new Date() > user.otpExpiresAt) {
+      return NextResponse.json({ error: "Code has expired." }, { status: 400 });
+    }
+
+    const valid = await bcrypt.compare(code, user.otpCode);
     if (!valid) {
       return NextResponse.json({ error: "Invalid or expired code." }, { status: 400 });
     }
 
-    // If this is email verification, mark user as verified
-    if (purpose === "EMAIL_VERIFY") {
-      await prisma.user.update({
-        where: { id: user.id },
-        data:  { emailVerified: new Date() },
-      });
-    }
+    // Mark user as verified
+    await prisma.user.update({
+      where: { id: user.id },
+      data:  { 
+        emailVerified: true,
+        otpCode: null,
+        otpExpiresAt: null
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {
