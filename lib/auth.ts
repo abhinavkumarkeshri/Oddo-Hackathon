@@ -32,7 +32,7 @@ export const authConfig: NextAuthConfig = {
           where: { email: String(credentials.email) },
         });
 
-        if (!user || !user.hashedPassword || !user.isActive) return null;
+        if (!user || !user.hashedPassword || user.status !== "ACTIVE") return null;
 
         // Check email verified
         if (!user.emailVerified) return null;
@@ -48,9 +48,8 @@ export const authConfig: NextAuthConfig = {
           id:    user.id,
           name:  user.name,
           email: user.email,
-          image: user.image,
           role:  user.role,
-          orgId: user.orgId,
+          departmentId: user.departmentId,
         };
       },
     }),
@@ -58,17 +57,17 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id    = user.id;
-        token.role  = (user as any).role;
-        token.orgId = (user as any).orgId;
+        token.id           = user.id;
+        token.role         = (user as any).role;
+        token.departmentId = (user as any).departmentId;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id    = token.id as string;
-        (session.user as any).role  = token.role;
-        (session.user as any).orgId = token.orgId;
+        session.user.id           = token.id as string;
+        (session.user as any).role         = token.role;
+        (session.user as any).departmentId = token.departmentId;
       }
       return session;
     },

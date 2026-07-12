@@ -24,13 +24,15 @@ export async function POST(req: NextRequest) {
 
     // Generate a secure 64-char hex token
     const token   = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
-    // Store as a VerificationToken (reusing the NextAuth model)
-    await prisma.verificationToken.upsert({
-      where:  { identifier_token: { identifier: email, token: "reset" } },
-      update: { token, expires },
-      create: { identifier: email, token, expires },
+    // Store token directly on user record
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken: token,
+        resetTokenExpiresAt: expires
+      }
     });
 
     const appUrl   = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
       to:      user.email,
       subject: "Reset your AssetFlow password",
       html:    passwordResetEmailHtml(resetUrl),
-      text:    `Reset your password: ${resetUrl}\n\nThis link expires in 60 minutes.`,
+      text:    `Reset your password: ${resetUrl}\n\nThis link expires in 30 minutes.`,
     });
 
     return NextResponse.json({ success: true });

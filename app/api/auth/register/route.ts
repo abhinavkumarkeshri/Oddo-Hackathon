@@ -6,9 +6,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { prisma } from "@/lib/db";
-import { createOtp } from "@/lib/otp";
 import { sendEmail, otpEmailHtml } from "@/lib/email";
+
+function generateOtpCode(): string {
+  return String(crypto.randomInt(100000, 999999));
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,23 +42,27 @@ export async function POST(req: NextRequest) {
 
     // ── Create user ────────────────────────────────────────────────────────────
     const hashedPassword = await bcrypt.hash(password, 12);
+    
+    const plainOtp = generateOtpCode();
+    const otpCode = await bcrypt.hash(plainOtp, 10);
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
     const user = await prisma.user.create({
       data: {
         name:           name.trim(),
         email:          email.toLowerCase().trim(),
         hashedPassword,
-        emailVerified:  null,
-        isActive:       true,
+        otpCode,
+        otpExpiresAt,
       },
     });
 
     // ── Send OTP ──────────────────────────────────────────────────────────────
-    const code = await createOtp(user.id, "EMAIL_VERIFY");
     await sendEmail({
       to:      user.email,
       subject: "Verify your AssetFlow account",
-      html:    otpEmailHtml(code, 10),
-      text:    `Your AssetFlow verification code is: ${code}\n\nExpires in 10 minutes.`,
+      html:    otpEmailHtml(plainOtp, 10),
+      text:    `Your AssetFlow verification code is: ${plainOtp}\n\nExpires in 10 minutes.`,
     });
 
     return NextResponse.json({ success: true }, { status: 201 });

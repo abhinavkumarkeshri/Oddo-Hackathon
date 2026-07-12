@@ -5,16 +5,20 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { prisma } from "@/lib/db";
-import { createOtp } from "@/lib/otp";
 import { sendEmail, otpEmailHtml } from "@/lib/email";
-import { OtpPurpose } from "@prisma/client";
+
+function generateOtpCode(): string {
+  return String(crypto.randomInt(100000, 999999));
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, purpose } = await req.json();
+    const { email } = await req.json();
 
-    if (!email || !purpose) {
+    if (!email) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
@@ -24,18 +28,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    const code = await createOtp(user.id, purpose as OtpPurpose);
+    const plainOtp = generateOtpCode();
+    const otpCode = await bcrypt.hash(plainOtp, 10);
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    const subject =
-      purpose === "EMAIL_VERIFY"
-        ? "Verify your AssetFlow account"
-        : "Your AssetFlow OTP code";
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { otpCode, otpExpiresAt }
+    });
 
     await sendEmail({
       to:      user.email,
-      subject,
-      html:    otpEmailHtml(code, 10),
-      text:    `Your code is: ${code}\n\nExpires in 10 minutes.`,
+      subject: "Verify your AssetFlow account",
+      html:    otpEmailHtml(plainOtp, 10),
+      text:    `Your code is: ${plainOtp}\n\nExpires in 10 minutes.`,
     });
 
     return NextResponse.json({ success: true });
