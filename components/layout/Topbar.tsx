@@ -35,6 +35,28 @@ export function Topbar({ user, pageTitle }: TopbarProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      fetch("/api/notifications")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setNotifications(data);
+        })
+        .catch(console.error);
+    }
+  }, [user]);
+
+  const markAllRead = async () => {
+    try {
+      await fetch("/api/notifications/mark-read", { method: "POST" });
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : user?.email?.[0]?.toUpperCase() ?? "U";
@@ -73,34 +95,40 @@ export function Topbar({ user, pageTitle }: TopbarProps) {
           >
             <Bell className="w-4.5 h-4.5" />
             {/* Unread dot */}
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#2563EB] rounded-full" />
+            {notifications.some((n: any) => !n.isRead) && (
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#2563EB] rounded-full" />
+            )}
           </button>
 
           {notifOpen && (
             <div
-              className="absolute right-0 top-full mt-2 w-72 bg-white border border-[#E5E7EB] rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-50 overflow-hidden"
+              className="absolute right-0 top-full mt-2 w-80 bg-white border border-[#E5E7EB] rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-50 overflow-hidden"
             >
               <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
                 <span className="text-[13px] font-semibold text-[#111827]">Notifications</span>
-                <button className="text-[11px] text-[#2563EB] font-medium hover:underline">
+                <button onClick={markAllRead} className="text-[11px] text-[#2563EB] font-medium hover:underline">
                   Mark all read
                 </button>
               </div>
-              <div className="py-2">
-                <NotifItem
-                  title="Asset #A-004 is overdue"
-                  desc="Laptop — John Doe · 2 days ago"
-                  unread
-                />
-                <NotifItem
-                  title="Maintenance request approved"
-                  desc="Projector #P-011 · 1 day ago"
-                />
+              <div className="py-2 max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <p className="text-center text-xs text-gray-500 py-4">No notifications</p>
+                ) : (
+                  notifications.map((n: any) => (
+                    <NotifItem
+                      key={n.id}
+                      title={n.type}
+                      desc={n.message}
+                      time={new Date(n.createdAt).toLocaleDateString()}
+                      unread={!n.isRead}
+                    />
+                  ))
+                )}
               </div>
               <div className="px-4 py-2.5 border-t border-[#E5E7EB]">
-                <button className="text-[12px] text-[#2563EB] font-medium hover:underline">
+                <a href="/dashboard/activity-log" className="text-[12px] text-[#2563EB] font-medium hover:underline block text-center w-full">
                   View all activity →
-                </button>
+                </a>
               </div>
             </div>
           )}
@@ -174,10 +202,12 @@ export function Topbar({ user, pageTitle }: TopbarProps) {
 function NotifItem({
   title,
   desc,
+  time,
   unread,
 }: {
   title: string;
   desc: string;
+  time?: string;
   unread?: boolean;
 }) {
   return (
@@ -194,6 +224,7 @@ function NotifItem({
       <div>
         <p className="text-[12px] font-medium text-[#111827] leading-snug">{title}</p>
         <p className="text-[11px] text-[#9CA3AF] mt-0.5">{desc}</p>
+        {time && <p className="text-[10px] text-[#9CA3AF] mt-0.5">{time}</p>}
       </div>
     </div>
   );

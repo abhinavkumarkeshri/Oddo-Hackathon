@@ -2,10 +2,57 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
+async function checkOverdueAllocations() {
+  const now = new Date();
+  
+  // Find active allocations that are past their expectedReturnDate
+  const overdueAllocations = await prisma.allocation.findMany({
+    where: {
+      status: "ACTIVE",
+      expectedReturnDate: { lt: now },
+      returnedAt: null
+    },
+    include: { asset: true }
+  });
+
+  if (overdueAllocations.length === 0) return;
+
+  for (const alloc of overdueAllocations) {
+    // Check if notification already exists
+    const existingNotif = await prisma.notification.findFirst({
+      where: {
+        userId: alloc.userId,
+        type: "Overdue Return Alert",
+        relatedEntityId: alloc.id
+      }
+    });
+
+    if (!existingNotif) {
+      await prisma.notification.create({
+        data: {
+          userId: alloc.userId,
+          type: "Overdue Return Alert",
+          message: `Your allocation of ${alloc.asset.name} (${alloc.asset.assetTag}) is overdue for return.`,
+          relatedEntityType: "Allocation",
+          relatedEntityId: alloc.id
+        }
+      });
+    }
+
+    // Update status to OVERDUE
+    await prisma.allocation.update({
+      where: { id: alloc.id },
+      data: { status: "OVERDUE" }
+    });
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await checkOverdueAllocations();
 
     const allocations = await prisma.allocation.findMany({
       include: {
@@ -88,6 +135,16 @@ export async function POST(req: Request) {
           entityType: "Allocation",
           entityId: allocation.id,
           detailsJson: { assetId, allocatedTo: userId },
+        }
+      });
+
+      await tx.notification.create({
+        data: {
+          userId,
+          type: "Asset Assigned",
+          message: `${asset.name} (${asset.assetTag}) has been assigned to you`,
+          relatedEntityType: "Allocation",
+          relatedEntityId: allocation.id,
         }
       });
 

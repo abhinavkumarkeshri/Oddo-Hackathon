@@ -2,10 +2,28 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
+async function syncBookingStatuses() {
+  const now = new Date();
+  
+  // UPCOMING -> ONGOING
+  await prisma.booking.updateMany({
+    where: { status: "UPCOMING", startTime: { lte: now }, endTime: { gt: now } },
+    data: { status: "ONGOING" },
+  });
+
+  // UPCOMING or ONGOING -> COMPLETED
+  await prisma.booking.updateMany({
+    where: { status: { in: ["UPCOMING", "ONGOING"] }, endTime: { lte: now } },
+    data: { status: "COMPLETED" },
+  });
+}
+
 export async function GET(req: Request) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await syncBookingStatuses();
 
     const bookings = await prisma.booking.findMany({
       include: {
@@ -70,22 +88,47 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Time slot overlaps with an existing booking" }, { status: 409 });
     }
 
-    const booking = await prisma.booking.create({
-      data: {
-        assetId,
-        requestedById: session.user.id,
-        departmentId,
-        startTime: start,
-        endTime: end,
-        status: "UPCOMING",
-      },
-      include: {
-        asset: true,
-        requestedBy: true,
-      }
+    const result = await prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.create({
+        data: {
+          assetId,
+          requestedById: session.user.id,
+          departmentId,
+          startTime: start,
+          endTime: end,
+          status: "UPCOMING",
+        },
+        include: {
+          asset: true,
+          requestedBy: true,
+        }
+      });
+
+      await tx.notification.create({
+        data: {
+          userId: session.user.id,
+          type: "Booking Confirmed",
+          message: `Your booking for ${booking.asset.name} from ${start.toLocaleTimeString()} to ${end.toLocaleTimeString()} is confirmed.`,
+          relatedEntityType: "Booking",
+          relatedEntityId: booking.id,
+        }
+      });
+
+      // Also log activity
+      await tx.activityLog.create({
+        data: {
+          userId: session.user.id,
+          action: "BOOKING_CREATED",
+          entityType: "Booking",
+          entityId: booking.id,
+          detailsJson: { assetId, startTime: start, endTime: end },
+        }
+      });
+
+      return booking;
     });
 
-    return NextResponse.json(booking);
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error(error);
     return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
