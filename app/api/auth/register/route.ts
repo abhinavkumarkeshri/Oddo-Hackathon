@@ -68,6 +68,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (err) {
     console.error("[register]", err);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error.", details: String(err), stack: err instanceof Error ? err.stack : undefined }, { status: 500 });
   }
 }
