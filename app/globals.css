@@ -49,7 +49,12 @@
     --destructive:      #DC2626;
     --ring:             #2563EB;
     --input:            #E5E7EB;
+    --border:           #E5E7EB;
     --radius:           0.5rem;
+    --popover:          #FFFFFF;
+    --popover-foreground: #111827;
+    --card:             #FFFFFF;
+    --card-foreground:  #111827;
   }
 
   * {

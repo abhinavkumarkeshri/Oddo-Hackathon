@@ -8,7 +8,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Boxes, Loader2, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
+import Image from "next/image";
+import { Loader2, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 
 export default function VerifyPage() {
   const router  = useRouter();
@@ -116,9 +117,7 @@ export default function VerifyPage() {
       <div className="auth-card">
         {/* Logo */}
         <div className="auth-logo">
-          <div className="auth-logo-icon">
-            <Boxes className="w-5 h-5 text-white" />
-          </div>
+          <Image src="/asset_flow_logo.png" alt="AssetFlow" width={36} height={36} className="rounded-lg" />
           <span className="auth-logo-text">AssetFlow</span>
         </div>
 
