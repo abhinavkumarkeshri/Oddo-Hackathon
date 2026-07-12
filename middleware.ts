@@ -28,14 +28,18 @@ export default auth((req) => {
 
   // Unauthenticated user hitting dashboard → send to login
   if (isDashboard && !isLoggedIn) {
-    const loginUrl = new URL("/login", req.url);
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = "/login";
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Authenticated user hitting auth pages → send to dashboard
   if (isAuthRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    const dashboardUrl = req.nextUrl.clone();
+    dashboardUrl.pathname = "/dashboard";
+    dashboardUrl.searchParams.delete("callbackUrl");
+    return NextResponse.redirect(dashboardUrl);
   }
 
   // Unauthenticated user hitting protected API routes → return 401
