@@ -141,7 +141,7 @@ export function passwordResetEmailHtml(resetUrl: string): string {
 
 export function welcomeEmailHtml(name: string): string {
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "AssetFlow";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
