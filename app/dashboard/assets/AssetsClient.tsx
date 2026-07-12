@@ -124,7 +124,11 @@ export default function AssetsClient({ role }: { role: string }) {
                 <div className="space-y-2">
                   <Label>Category *</Label>
                   <Select value={newAsset.categoryId} onValueChange={v => setNewAsset({...newAsset, categoryId: v})}>
-                    <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category">
+                        {categories.find(c => c.id === newAsset.categoryId)?.name || "Select Category"}
+                      </SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
@@ -137,7 +141,14 @@ export default function AssetsClient({ role }: { role: string }) {
                 <div className="space-y-2">
                   <Label>Condition</Label>
                   <Select value={newAsset.condition} onValueChange={v => setNewAsset({...newAsset, condition: v})}>
-                    <SelectTrigger><SelectValue placeholder="Condition" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Condition">
+                        {newAsset.condition === "GOOD" ? "Good" :
+                         newAsset.condition === "FAIR" ? "Fair" :
+                         newAsset.condition === "POOR" ? "Poor" :
+                         newAsset.condition === "DAMAGED" ? "Damaged" : "Condition"}
+                      </SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="GOOD">Good</SelectItem>
                       <SelectItem value="FAIR">Fair</SelectItem>
@@ -157,7 +168,12 @@ export default function AssetsClient({ role }: { role: string }) {
                 <div className="space-y-2">
                   <Label>Department</Label>
                   <Select value={newAsset.departmentId} onValueChange={v => setNewAsset({...newAsset, departmentId: v})}>
-                    <SelectTrigger><SelectValue placeholder="Assign to Dept" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Assign to Dept">
+                        {newAsset.departmentId === "none" ? "None" : 
+                         departments.find(d => d.id === newAsset.departmentId)?.name || "Assign to Dept"}
+                      </SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">None</SelectItem>
                       {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
@@ -187,21 +203,39 @@ export default function AssetsClient({ role }: { role: string }) {
           <Input placeholder="Search tag, SN, name..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Category" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Category">
+              {filterCategory === "all" ? "All Categories" : 
+               categories.find(c => c.id === filterCategory)?.name || "Category"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
             {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Department" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Department">
+              {filterDepartment === "all" ? "All Departments" : 
+               departments.find(d => d.id === filterDepartment)?.name || "Department"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Departments</SelectItem>
             {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Status">
+              {filterStatus === "all" ? "All Status" :
+               filterStatus === "AVAILABLE" ? "Available" :
+               filterStatus === "ALLOCATED" ? "Allocated" :
+               filterStatus === "UNDER_MAINTENANCE" ? "Maintenance" :
+               filterStatus === "RETIRED" ? "Retired" : "Status"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="AVAILABLE">Available</SelectItem>
@@ -245,7 +279,7 @@ export default function AssetsClient({ role }: { role: string }) {
       </div>
 
       <Sheet open={!!selectedAssetId} onOpenChange={(open) => { if(!open) { setSelectedAssetId(null); setAssetDetails(null); }}}>
-        <SheetContent className="sm:max-w-[600px] overflow-y-auto w-[600px]">
+        <SheetContent className="w-[90vw] sm:w-[600px] sm:max-w-none overflow-y-auto !m-0 p-6 sm:p-8">
           {assetDetails ? (
             <>
               <SheetHeader className="mb-6">
