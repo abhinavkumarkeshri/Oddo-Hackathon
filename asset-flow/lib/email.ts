@@ -1,8 +1,7 @@
 /**
  * lib/email.ts
- * Thin email abstraction.
- * - If RESEND_API_KEY is set → sends via Resend
- * - Otherwise → console.logs the payload (great for local dev without a Resend account)
+ * Email abstraction using SMTP (nodemailer / Gmail App Password).
+ * - In dev with no SMTP config → OTP codes are printed to the console.
  */
 
 interface SendEmailOptions {
@@ -13,13 +12,14 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail(opts: SendEmailOptions): Promise<{ id?: string }> {
-  const from = process.env.EMAIL_FROM ?? "AssetFlow <no-reply@assetflow.app>";
+  const from = `"${process.env.FROM_NAME ?? "AssetFlow"}" <${process.env.FROM_EMAIL ?? "no-reply@assetflow.app"}>`;
+  const toList = Array.isArray(opts.to) ? opts.to : [opts.to];
 
-  // ── Dev fallback: no API key set ──────────────────────────────────────────
-  if (!process.env.RESEND_API_KEY) {
+  // ── Dev fallback: no SMTP config ───────────────────────────────────────────
+  if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
     console.log("\n──────────────────────────────────────────────");
-    console.log("[DEV EMAIL - not sent, no RESEND_API_KEY]");
-    console.log(`To:      ${Array.isArray(opts.to) ? opts.to.join(", ") : opts.to}`);
+    console.log("[DEV EMAIL - not sent, no SMTP credentials]");
+    console.log(`To:      ${toList.join(", ")}`);
     console.log(`From:    ${from}`);
     console.log(`Subject: ${opts.subject}`);
     console.log("Body:");
@@ -28,24 +28,28 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ id?: string }
     return { id: "dev-no-send" };
   }
 
-  // ── Production: send via Resend ───────────────────────────────────────────
-  const { Resend } = await import("resend");
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  // ── Production: send via SMTP ─────────────────────────────────────────────
+  const nodemailer = await import("nodemailer");
 
-  const { data, error } = await resend.emails.send({
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST ?? "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: false, // STARTTLS
+    auth: {
+      user: process.env.SMTP_EMAIL,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+
+  const info = await transporter.sendMail({
     from,
-    to: Array.isArray(opts.to) ? opts.to : [opts.to],
+    to: toList.join(", "),
     subject: opts.subject,
     html: opts.html,
     text: opts.text,
   });
 
-  if (error) {
-    console.error("[Resend] send error:", error);
-    throw new Error(`Email send failed: ${error.message}`);
-  }
-
-  return { id: data?.id };
+  return { id: info.messageId };
 }
 
 // ─── Email Templates ──────────────────────────────────────────────────────────
