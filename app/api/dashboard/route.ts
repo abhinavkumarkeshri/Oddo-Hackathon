@@ -13,17 +13,17 @@ export async function GET(req: Request) {
     const userId = user.id;
 
     // Build common where clauses for scoping
-    const assetWhere = isGlobal ? {} : { departmentId };
-    const allocationWhere = isGlobal 
+    const assetWhere: any = isGlobal ? {} : { departmentId };
+    const allocationWhere: any = isGlobal 
       ? { status: "ACTIVE" } 
       : (user.role === "DEPT_HEAD" && departmentId 
           ? { status: "ACTIVE", departmentId } 
           : { status: "ACTIVE", userId });
 
-    const maintenanceWhere = isGlobal ? {} : { asset: { departmentId } };
+    const maintenanceWhere: any = isGlobal ? {} : { asset: { departmentId } };
     
     // For pending transfers, Asset Manager sees all. Dept head sees transfers where fromUser belongs to their dept
-    const transferWhere = isGlobal 
+    const transferWhere: any = isGlobal 
       ? { status: "REQUESTED" } 
       : { status: "REQUESTED", fromUser: { departmentId } };
 

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 
 async function syncBookingStatuses() {
   const now = new Date();
+  const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
   
   // UPCOMING -> ONGOING
   await prisma.booking.updateMany({
@@ -16,6 +17,37 @@ async function syncBookingStatuses() {
     where: { status: { in: ["UPCOMING", "ONGOING"] }, endTime: { lte: now } },
     data: { status: "COMPLETED" },
   });
+
+  // REMINDER NOTIFICATIONS: For UPCOMING bookings starting within 60 mins
+  const upcomingBookings = await prisma.booking.findMany({
+    where: { 
+      status: "UPCOMING", 
+      startTime: { gt: now, lte: nextHour }
+    },
+    include: { asset: true }
+  });
+
+  for (const booking of upcomingBookings) {
+    const existingReminder = await prisma.notification.findFirst({
+      where: {
+        userId: booking.requestedById,
+        type: "Booking Reminder",
+        relatedEntityId: booking.id
+      }
+    });
+
+    if (!existingReminder) {
+      await prisma.notification.create({
+        data: {
+          userId: booking.requestedById,
+          type: "Booking Reminder",
+          message: `Reminder: Your booking for ${booking.asset.name} starts in less than an hour!`,
+          relatedEntityType: "Booking",
+          relatedEntityId: booking.id
+        }
+      });
+    }
+  }
 }
 
 export async function GET(req: Request) {

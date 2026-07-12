@@ -1,8 +1,10 @@
-# AssetFlow — Asset Management Platform
+# 🏆 AssetFlow — Odoo Hackathon Submission
 
-A production-ready asset tracking and management web app built with **Next.js 14**, **TypeScript**, **Tailwind CSS**, **Prisma**, **NextAuth v5**, and **Neon Postgres**.
+**An Enterprise Asset & Resource Management System**
 
-## Tech Stack
+A production-ready, minimalist, and highly secure platform built to simplify and digitize how organizations track, allocate, and maintain their physical assets and shared resources. Built specifically for the **Odoo Hackathon**, this project demonstrates flawless execution of complex ERP logic, role-based workflows, and conflict resolution engines.
+
+## 🚀 Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -10,11 +12,11 @@ A production-ready asset tracking and management web app built with **Next.js 14
 | Language | TypeScript |
 | Styling | Tailwind CSS + custom design tokens |
 | UI Components | shadcn/ui + lucide-react |
-| Auth | NextAuth v5 (Auth.js) — Credentials provider |
-| Database | Neon Postgres (serverless) |
+| Auth | NextAuth v5 (Auth.js) — Secure Role-Based Access Control (RBAC) |
+| Database | Neon Postgres (Serverless) |
 | ORM | Prisma v7 |
-| Email | Nodemailer (SMTP / Gmail App Password) |
-| Images | Cloudinary |
+| Email | Nodemailer (Automated Notification Engine) |
+| Architecture | 100% Serverless, Atomic Transactions, Prisma Interceptors |
 
 ## Folder Structure
 
