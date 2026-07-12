@@ -48,6 +48,77 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24 w-full max-w-5xl">
+        
+        {/* Hackathon Evaluator Quick Access (Left Side) */}
+        <div className="hidden lg:flex flex-col max-w-md bg-white border border-[#E5E7EB] rounded-2xl p-8 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Hackathon Evaluator</h2>
+              <p className="text-sm text-slate-500">1-Click Test Accounts</p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+            Welcome to AssetFlow! To easily review the different role-based access controls and dashboards, simply click one of the profiles below to auto-fill the login form. 
+          </p>
+          <div className="grid grid-cols-1 gap-3">
+            <button
+              type="button"
+              onClick={() => { setEmail("ananya.sharma@example.com"); setPassword("password123"); }}
+              className="text-left px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:border-blue-500 hover:bg-blue-50 transition-all group flex items-center justify-between"
+            >
+              <div>
+                <div className="text-sm font-semibold text-slate-900 group-hover:text-blue-700">System Admin</div>
+                <div className="text-xs text-slate-500">ananya.sharma@example.com</div>
+              </div>
+              <div className="text-xs font-mono text-slate-400 bg-white px-2 py-1 rounded border">password123</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail("rahul.patel@example.com"); setPassword("password123"); }}
+              className="text-left px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:border-blue-500 hover:bg-blue-50 transition-all group flex items-center justify-between"
+            >
+              <div>
+                <div className="text-sm font-semibold text-slate-900 group-hover:text-blue-700">Asset Manager</div>
+                <div className="text-xs text-slate-500">rahul.patel@example.com</div>
+              </div>
+              <div className="text-xs font-mono text-slate-400 bg-white px-2 py-1 rounded border">password123</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail("siddharth.singh@example.com"); setPassword("password123"); }}
+              className="text-left px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:border-blue-500 hover:bg-blue-50 transition-all group flex items-center justify-between"
+            >
+              <div>
+                <div className="text-sm font-semibold text-slate-900 group-hover:text-blue-700">Department Head</div>
+                <div className="text-xs text-slate-500">siddharth.singh@example.com</div>
+              </div>
+              <div className="text-xs font-mono text-slate-400 bg-white px-2 py-1 rounded border">password123</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail("karan.gupta@example.com"); setPassword("password123"); }}
+              className="text-left px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:border-blue-500 hover:bg-blue-50 transition-all group flex items-center justify-between"
+            >
+              <div>
+                <div className="text-sm font-semibold text-slate-900 group-hover:text-blue-700">Employee</div>
+                <div className="text-xs text-slate-500">karan.gupta@example.com</div>
+              </div>
+              <div className="text-xs font-mono text-slate-400 bg-white px-2 py-1 rounded border">password123</div>
+            </button>
+          </div>
+          
+          <div className="mt-6 pt-4 border-t border-slate-100">
+             <p className="text-xs text-slate-500 text-center">
+                Want to test standard onboarding? <br/>
+                <Link href="/register" className="text-blue-600 hover:underline font-medium">Create a new employee account here</Link>
+             </p>
+          </div>
+        </div>
+
       <div className="auth-card">
         {/* Logo */}
         <div className="auth-logo">
@@ -145,5 +216,6 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  </div>
   );
 }

@@ -97,8 +97,9 @@ Open [http://localhost:3000](http://localhost:3000)
 | Stage | Status |
 |---|---|
 | Stage 0 — Foundation & Auth | ✅ Complete |
-| Stage 1 — Assets CRUD | 🔜 Next |
-| Stage 2 — Allocations | 🔜 |
-| Stage 3 — Bookings | 🔜 |
-| Stage 4 — Maintenance | 🔜 |
-| Stage 5 — Audits & Reports | 🔜 |
+| Stage 1 — Assets Directory & Registration | ✅ Complete |
+| Stage 2 — Allocations & Transfers | ✅ Complete |
+| Stage 3 — Resource Booking Engine | ✅ Complete |
+| Stage 4 — Maintenance Workflows | ✅ Complete |
+| Stage 5 — Audit Cycles & Email Notifications | ✅ Complete |
+
