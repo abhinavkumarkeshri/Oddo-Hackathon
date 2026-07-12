@@ -97,7 +97,7 @@ export default function AuditsPage() {
         
         {isManager && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
+            <DialogTrigger>
               <Button className="bg-blue-600 hover:bg-blue-700 text-white">Create Audit Cycle</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-white">
@@ -112,7 +112,7 @@ export default function AuditsPage() {
                 
                 <div className="space-y-2">
                   <Label>Scope Type</Label>
-                  <Select value={formData.scopeType} onValueChange={(v) => setFormData({...formData, scopeType: v, scopeDepartmentId: "", scopeLocation: ""})}>
+                  <Select value={formData.scopeType} onValueChange={(v: string | null) => setFormData({...formData, scopeType: v || "department", scopeDepartmentId: "", scopeLocation: ""})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="department">By Department</SelectItem>
@@ -124,7 +124,7 @@ export default function AuditsPage() {
                 {formData.scopeType === "department" ? (
                   <div className="space-y-2">
                     <Label>Department</Label>
-                    <Select onValueChange={(v) => setFormData({...formData, scopeDepartmentId: v})} required>
+                    <Select onValueChange={(v: string | null) => setFormData({...formData, scopeDepartmentId: v || ""})} required>
                       <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
                       <SelectContent>
                         {departments.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}

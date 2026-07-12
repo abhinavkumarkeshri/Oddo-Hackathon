@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       // Use asset tag as QR Code default value
       const qrCodeValue = newAssetTag;
 
-      return await tx.asset.create({
+      const newAsset = await tx.asset.create({
         data: {
           name,
           categoryId,
@@ -89,6 +89,18 @@ export async function POST(req: Request) {
           department: true,
         },
       });
+
+      await tx.activityLog.create({
+        data: {
+          userId: session.user.id,
+          action: "ASSET_REGISTERED",
+          entityType: "Asset",
+          entityId: newAsset.id,
+          detailsJson: { name, assetTag: newAssetTag, categoryId },
+        }
+      });
+
+      return newAsset;
     });
 
     return NextResponse.json(result);

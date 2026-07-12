@@ -6,7 +6,6 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
-import { OtpPurpose } from "@prisma/client";
 
 const OTP_EXPIRY_MINUTES = 10;
 
@@ -19,19 +18,17 @@ export function generateOtpCode(): string {
  * Creates a new OTP record (hashed) in the DB and returns the plain code.
  * Call this server-side, then email the plain code to the user.
  */
-export async function createOtp(userId: string, purpose: OtpPurpose): Promise<string> {
+export async function createOtp(userId: string, purpose: string = "VERIFY"): Promise<string> {
   const code = generateOtpCode();
   const hashed = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
-  // Invalidate any existing OTPs of the same purpose for this user
-  await prisma.otpToken.updateMany({
-    where: { userId, purpose, usedAt: null },
-    data: { usedAt: new Date() },
-  });
-
-  await prisma.otpToken.create({
-    data: { userId, code: hashed, purpose, expiresAt },
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      otpCode: hashed,
+      otpExpiresAt: expiresAt,
+    },
   });
 
   return code;
@@ -44,28 +41,26 @@ export async function createOtp(userId: string, purpose: OtpPurpose): Promise<st
 export async function verifyOtp(
   userId: string,
   plainCode: string,
-  purpose: OtpPurpose
+  purpose: string = "VERIFY"
 ): Promise<boolean> {
-  const tokens = await prisma.otpToken.findMany({
-    where: {
-      userId,
-      purpose,
-      usedAt: null,
-      expiresAt: { gt: new Date() },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 1,
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { otpCode: true, otpExpiresAt: true },
   });
 
-  if (!tokens.length) return false;
+  if (!user || !user.otpCode || !user.otpExpiresAt) return false;
+  
+  if (user.otpExpiresAt < new Date()) {
+    return false; // Expired
+  }
 
-  const token = tokens[0];
-  const isValid = await bcrypt.compare(plainCode, token.code);
+  const isValid = await bcrypt.compare(plainCode, user.otpCode);
   if (!isValid) return false;
 
-  await prisma.otpToken.update({
-    where: { id: token.id },
-    data: { usedAt: new Date() },
+  // Mark used
+  await prisma.user.update({
+    where: { id: userId },
+    data: { otpCode: null, otpExpiresAt: null },
   });
 
   return true;

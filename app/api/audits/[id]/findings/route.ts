@@ -45,6 +45,26 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       },
     });
 
+    if (result === "MISSING" || result === "DAMAGED") {
+      const asset = await prisma.asset.findUnique({ where: { id: assetId } });
+      const managers = await prisma.user.findMany({
+        where: { role: { in: ["ADMIN", "ASSET_MANAGER"] } }
+      });
+      
+      if (asset && managers.length > 0) {
+        const message = `Audit Discrepancy: ${asset.name} (${asset.assetTag}) was marked as ${result}.`;
+        await prisma.notification.createMany({
+          data: managers.map(m => ({
+            userId: m.id,
+            type: "Audit Discrepancy Flagged",
+            message,
+            relatedEntityType: "Asset",
+            relatedEntityId: asset.id,
+          }))
+        });
+      }
+    }
+
     return NextResponse.json(finding);
   } catch (error) {
     console.error(error);
