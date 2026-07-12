@@ -1,28 +1,50 @@
-# Env files — never commit secrets
-.env
-.env.*
-!.env.example
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Dependencies
-node_modules/
-.pnp
+# dependencies
+/node_modules
+/.pnp
 .pnp.js
+.yarn/install-state.gz
 
-# Build outputs
-.next/
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
 /build
-/dist
-/out
 
-# Misc
+# misc
 .DS_Store
 *.pem
+Thumbs.db
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Vercel
+# local env files — NEVER commit real secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Allow the example file to be committed
+!.env.example
+
+# vercel
 .vercel
 
-# TypeScript
+# typescript
 *.tsbuildinfo
+next-env.d.ts
+
+# Prisma generated client (regenerated on npm install / prisma generate)
+/src/generated/
+/node_modules/.prisma/
+
+# OS files
+.DS_Store
