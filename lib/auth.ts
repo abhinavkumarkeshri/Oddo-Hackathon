@@ -22,24 +22,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        console.log("[Auth] Attempting login for:", credentials?.email);
+        if (!credentials?.email || !credentials?.password) {
+          console.log("[Auth] Missing credentials");
+          return null;
+        }
 
+        const email = String(credentials.email).toLowerCase().trim();
         const user = await prisma.user.findUnique({
-          where: { email: String(credentials.email) },
+          where: { email },
         });
 
-        if (!user || !user.hashedPassword || user.status !== "ACTIVE") return null;
+        if (!user) {
+          console.log("[Auth] User not found:", credentials.email);
+          return null;
+        }
+        if (!user.hashedPassword) {
+          console.log("[Auth] User has no password set");
+          return null;
+        }
+        if (user.status !== "ACTIVE") {
+          console.log("[Auth] User status is not ACTIVE:", user.status);
+          return null;
+        }
 
         // Check email verified
-        if (!user.emailVerified) return null;
+        if (!user.emailVerified) {
+          console.log("[Auth] User email not verified");
+          return null;
+        }
 
-        const passwordMatch = await bcrypt.compare(
-          String(credentials.password),
-          user.hashedPassword
-        );
+        let passwordMatch = false;
+        try {
+          passwordMatch = await bcrypt.compare(
+            String(credentials.password),
+            user.hashedPassword
+          );
+        } catch (e) {
+          console.error("[Auth] bcrypt compare error:", e);
+        }
 
-        if (!passwordMatch) return null;
+        if (!passwordMatch) {
+          console.log("[Auth] Password mismatch");
+          return null;
+        }
 
+        console.log("[Auth] Login successful for:", user.email);
         return {
           id:    user.id,
           name:  user.name,

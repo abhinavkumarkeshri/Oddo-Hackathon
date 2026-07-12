@@ -24,11 +24,19 @@ export async function POST(req: NextRequest) {
       where: { resetToken: token },
     });
 
-    if (!user || !user.resetTokenExpiresAt || user.resetTokenExpiresAt < new Date()) {
-      return NextResponse.json(
-        { error: "This reset link has expired or is invalid. Please request a new one." },
-        { status: 400 }
-      );
+    if (!user) {
+      console.log("[reset-password] Token not found in database:", token);
+      return NextResponse.json({ error: "This reset link has expired or is invalid. Please request a new one." }, { status: 400 });
+    }
+
+    if (!user.resetTokenExpiresAt) {
+      console.log("[reset-password] User has no expiration set:", user.id);
+      return NextResponse.json({ error: "This reset link has expired or is invalid. Please request a new one." }, { status: 400 });
+    }
+
+    if (user.resetTokenExpiresAt < new Date()) {
+      console.log("[reset-password] Token expired. Exp:", user.resetTokenExpiresAt, "Now:", new Date());
+      return NextResponse.json({ error: "This reset link has expired or is invalid. Please request a new one." }, { status: 400 });
     }
 
     // Update password and clear reset token

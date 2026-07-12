@@ -1,7 +1,7 @@
 /**
  * lib/email.ts
- * Transactional email via SMTP (nodemailer / Gmail App Password).
- * Falls back to console.log in dev when SMTP_EMAIL or SMTP_PASSWORD is not set.
+ * Transactional email via SMTP (nodemailer).
+ * Falls back to console.log in dev when SMTP_HOST is not set.
  */
 
 interface SendEmailOptions {
@@ -12,13 +12,15 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail(opts: SendEmailOptions): Promise<{ id?: string }> {
-  const from = `"${process.env.FROM_NAME ?? "Assets Flow"}" <${process.env.FROM_EMAIL ?? "no-reply@assetflow.app"}>`;
+  const fromName = process.env.SMTP_FROM_NAME || process.env.FROM_NAME || "Assets Flow";
+  const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.FROM_EMAIL || "no-reply@assetflow.app";
+  const from = `"${fromName}" <${fromEmail}>`;
   const toList = Array.isArray(opts.to) ? opts.to : [opts.to];
 
   // ── Dev fallback: no SMTP config ─────────────────────────────────────────
-  if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+  if (!process.env.SMTP_HOST) {
     console.log("\n──────────────────────────────────────────────────────");
-    console.log("[DEV EMAIL — not sent, no SMTP credentials configured]");
+    console.log("[DEV EMAIL — not sent, no SMTP_HOST configured]");
     console.log(`To:      ${toList.join(", ")}`);
     console.log(`From:    ${from}`);
     console.log(`Subject: ${opts.subject}`);
@@ -29,27 +31,32 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ id?: string }
   }
 
   // ── Production: send via SMTP ─────────────────────────────────────────────
-  const nodemailer = await import("nodemailer");
+  try {
+    const nodemailer = await import("nodemailer");
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST ?? "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: false, // STARTTLS on port 587
-    auth: {
-      user: process.env.SMTP_EMAIL,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT ?? 587),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER || process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
 
-  const info = await transporter.sendMail({
-    from,
-    to: toList.join(", "),
-    subject: opts.subject,
-    html: opts.html,
-    text: opts.text,
-  });
+    const info = await transporter.sendMail({
+      from,
+      to: toList.join(", "),
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.text,
+    });
 
-  return { id: info.messageId };
+    return { id: info.messageId };
+  } catch (error) {
+    console.error("Failed to send email via Nodemailer", error);
+    return { id: undefined };
+  }
 }
 
 // ─── Email Templates ──────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -81,9 +82,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       {/* Logo */}
       <div className="sidebar-logo">
         <Link href="/dashboard" className="flex items-center gap-2.5 no-underline">
-          <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
-            <Boxes className="w-4 h-4 text-white" />
-          </div>
+          <Image src="/asset_flow_logo.png" alt="AssetFlow" width={32} height={32} className="rounded-lg" />
           <span className="text-[15px] font-semibold text-[#111827] tracking-tight">
             AssetFlow
           </span>

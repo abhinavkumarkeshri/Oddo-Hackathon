@@ -241,7 +241,16 @@ export default function OrgSetupClient() {
                 <TableRow key={cat.id}>
                   <TableCell className="font-medium">{cat.name}</TableCell>
                   <TableCell>
-                    {cat.customFieldsJson ? (cat.customFieldsJson as any[]).map(f => f.name).join(", ") : "-"}
+                    {(() => {
+                      if (!cat.customFieldsJson) return "-";
+                      if (Array.isArray(cat.customFieldsJson)) {
+                        return cat.customFieldsJson.map((f: any) => f.name || f).join(", ");
+                      }
+                      if (typeof cat.customFieldsJson === "object") {
+                        return Object.keys(cat.customFieldsJson).join(", ");
+                      }
+                      return "-";
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}
