@@ -23,6 +23,9 @@ export default auth((req) => {
     pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/reset-password");
 
+  const isApiRoute = pathname.startsWith("/api");
+  const isAuthApiRoute = pathname.startsWith("/api/auth");
+
   // Unauthenticated user hitting dashboard → send to login
   if (isDashboard && !isLoggedIn) {
     const loginUrl = new URL("/login", req.url);
@@ -35,9 +38,14 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
+  // Unauthenticated user hitting protected API routes → return 401
+  if (isApiRoute && !isAuthApiRoute && !isLoggedIn) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
 };
